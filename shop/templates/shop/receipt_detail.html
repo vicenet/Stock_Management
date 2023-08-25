@@ -1,0 +1,9 @@
+{% extends 'loans/index.html' %}
+
+{% block content %}
+  <h1>Receipt Details</h1>
+  <p>Receipt Number: {{ receipt.pk }}</p>
+  <p>Payment: {{ receipt.payment.pk }}</p>
+  <p>Amount: {{ receipt.amount }}</p>
+  <p>Date Paid: {{ receipt.date_paid }}</p>
+{% endblock %}

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Nitrous</title>
+  <!-- plugins:css -->
+  <link rel="stylesheet" href="{%static '/css/main.css'%}">
+  <link rel="stylesheet" href="{%static 'vendors/feather/feather.css'%}">
+  <link rel="stylesheet" href="{%static 'vendors/mdi/css/materialdesignicons.min.css'%}">
+  <link rel="stylesheet" href="{%static 'vendors/ti-icons/css/themify-icons.css'%}">
+  <link rel="stylesheet" href="{%static 'vendors/typicons/typicons.css'%}">
+  <link rel="stylesheet" href="{%static 'vendors/simple-line-icons/css/simple-line-icons.css'%}">
+  <link rel="stylesheet" href="{%static 'vendors/css/vendor.bundle.base.css'%}">
+  <!-- endinject -->
+  <!-- Plugin css for this page -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="{%static 'vendors/datatables/dataTables.bootstrap4.css'%}">
+  <link rel="stylesheet" href="{%static 'js/select.dataTables.min.css'%}">
+  <!-- End plugin css for this page -->
+  <!-- inject:css -->
+  <link rel="stylesheet" href="{%static 'css/vertical-layout-light/style.css'%}">
+  <!-- endinject -->
+  <link rel="shortcut icon" href="{%static 'images/rada.png'%}" />
+</head>
+<body>
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+    <nav class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex align-items-top flex-row">
+      <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
+        <div class="me-3">
+          <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-bs-toggle="minimize">
+            <span class="icon-menu"></span>
+          </button>
+        </div>
+        <div>
+          <a class="navbar-brand brand-logo" href="{%url 'shop:home'%}">
+            <img src="{%static 'images/logo.svg'%}" alt="logo" />
+          </a>
+          <a class="navbar-brand brand-logo-mini" href="">
+            <img src="{%static 'images/logo.svg'%}" alt="logo" />
+          </a>
+        </div>
+      </div>
+      <div class="navbar-menu-wrapper d-flex align-items-top">
+        <ul class="navbar-nav">
+          <li class="nav-item font-weight-semibold d-none d-lg-block ms-0">
+
+                  <h1 class="welcome-text">Hello, <span class="text-black fw-bold">{% firstof user.get_short_name user.get_username %}</span></h1>
+
+            <h3 class="welcome-sub-text">Nitrous</h3>
+          </li>
+        </ul>
+
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item dropdown d-none d-lg-block user-dropdown">
+            <a class="nav-link" id="UserDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="mdi mdi-account-circle-outline icon-lg"></i>
+            <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="UserDropdown">
+              <div class="dropdown-header text-center">
+                <i class="mdi mdi-account-circle-outline icon-lg"></i>
+                <p class="mb-1 mt-3 font-weight-semibold">{{request.user}}</p>
+                <p class="fw-light text-muted mb-0">{{request.user.email}}</p>
+              </div>
+              <a href="{%url 'shop:profile'%}" class="dropdown-item" data-toggle="modal" data-target="#profileModal"><i class="dropdown-item-icon mdi mdi-account-outline text-primary me-2"></i> Profile</a>
+              <a href="{%url 'shop:change_password'%}" class="dropdown-item"><i class="dropdown-item-icon mdi mdi-key-outline text-primary me-2"></i> Change Password</a>
+              <a class="dropdown-item"  href="#" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="dropdown-item-icon mdi mdi-power text-primary me-2"></i>Sign Out</a><!-- Logout Button -->
+
+            </div>
+          </li>
+        </ul>
+        <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-bs-toggle="offcanvas">
+          <span class="mdi mdi-menu"></span>
+        </button>
+      </div>
+    </nav>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <!-- partial:partials/_settings-panel.html -->
+      <div class="theme-setting-wrapper">
+        <div id="settings-trigger"><i class="ti-settings"></i></div>
+        <div id="theme-settings" class="settings-panel">
+          <i class="settings-close ti-close"></i>
+          <p class="settings-heading">SIDEBAR SKINS</p>
+          <div class="sidebar-bg-options selected" id="sidebar-light-theme"><div class="img-ss rounded-circle bg-light border me-3"></div>Light</div>
+          <div class="sidebar-bg-options" id="sidebar-dark-theme"><div class="img-ss rounded-circle bg-dark border me-3"></div>Dark</div>
+          <p class="settings-heading mt-2">HEADER SKINS</p>
+          <div class="color-tiles mx-0 px-4">
+            <div class="tiles success"></div>
+            <div class="tiles warning"></div>
+            <div class="tiles danger"></div>
+            <div class="tiles info"></div>
+            <div class="tiles dark"></div>
+            <div class="tiles default"></div>
+          </div>
+        </div>
+      </div>
+      <div id="right-sidebar" class="settings-panel">
+        <i class="settings-close ti-close"></i>
+        <ul class="nav nav-tabs border-top" id="setting-panel" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="todo-tab" data-bs-toggle="tab" href="#todo-section" role="tab" aria-controls="todo-section" aria-expanded="true">TO DO LIST</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="chats-tab" data-bs-toggle="tab" href="#chats-section" role="tab" aria-controls="chats-section">CHATS</a>
+          </li>
+        </ul>
+
+      </div>
+      <!-- partial -->
+      <!-- partial:partials/_sidebar.html -->
+      <nav class="sidebar sidebar-offcanvas" id="sidebar">
+        <ul class="nav">
+          <li class="nav-item">
+            <a class="nav-link " href="">
+              <i class="mdi mdi-bank-outline menu-icon"></i>
+              <span class="menu-title">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="collapse" href="#clients" aria-expanded="false" aria-controls="ui-basic">
+              <i class="menu-icon mdi mdi-account"></i>
+              <span class="menu-title">Sales</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="clients">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"> <a class="nav-link" href="{%url 'shop:sales' sale_status='all'%}">All Sales</a></li>
+                <li class="nav-item"> <a class="nav-link" href="{%url 'shop:sale_create'%}">Add Sale</a></li>
+              </ul>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="collapse" href="#shop" aria-expanded="false" aria-controls="ui-basic">
+              <i class="menu-icon mdi mdi-wallet"></i>
+              <span class="menu-title">Accounts</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="shop">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"> <a class="nav-link" href="{%url 'shop:stock'%}">Stock</a></li>
+                <li class="nav-item"> <a class="nav-link" href="">Payments</a></li>
+                <li class="nav-item"> <a class="nav-link" href="">Auctions</a></li>
+                <li class="nav-item"> <a class="nav-link " href="{%url 'shop:item_create'%}">Items</a></li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </nav>
+
+<!-- profiles/templates/profiles/profile_modal.html -->
+      <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="logoutModalLabel">Logout Confirmation</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to log out?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <a href="{% url 'shop:logoutPage' %}" class="btn btn-primary">Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- partial -->
+      {% block content %}
+
+
+
+      {% endblock  %}
+
+
+      </div>
+      <!-- main-panel ends -->
+    </div>
+    {% include 'shop/profiles.html' %}
+    {% include 'shop/footer.html' %}
+  </div>
+  <!-- container-scroller -->
+
+  <!-- plugins:js -->
+  <script src="{%static 'vendors/js/vendor.bundle.base.js'%}"></script>
+  <!-- endinject -->
+  <!-- Plugin js for this page -->
+  <script src="{%static 'vendors/chart.js/Chart.min.js'%}"></script>
+  <script src="{%static 'vendors/bootstrap-datepicker/bootstrap-datepicker.min.js'%}"></script>
+  <script src="{%static 'vendors/progressbar.js/progressbar.min.js'%}"></script>
+
+  <!-- End plugin js for this page -->
+  <!-- inject:js -->
+  <script src="{%static 'js/off-canvas.js'%}"></script>
+  <script src="{%static 'js/hoverable-collapse.js'%}"></script>
+  <script src="{%static 'js/template.js'%}"></script>
+  <script src="{%static 'js/settings.js'%}"></script>
+  <script src="{%static 'js/todolist.js'%}"></script>
+  <!-- endinject -->
+  <!-- Custom js for this page-->
+  <script src="{%static 'js/select.dataTables.min.css'%}"></script>
+  <script src="{% static 'vendors/datatables/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'vendors/datatables/dataTables.bootstrap4.min.js' %}"></script>
+  <script src="{% static 'js/data-table.js' %}"></script>
+  <script src="{%static 'js/dashboard.js'%}"></script>
+  <script src="{%static 'js/Chart.roundedBarCharts.js'%}"></script>
+
+    <!-- Page level custom scripts -->
+  <script src="{% static 'js/chart-area-demo.js' %}"></script>
+  <script src="{% static 'js/chart-pie-demo.js' %}"></script>
+  <script src="{% static 'js/datatables-demo.js' %}"></script>
+  <!-- End custom js for this page-->
+</body>
+
+</html>
+
