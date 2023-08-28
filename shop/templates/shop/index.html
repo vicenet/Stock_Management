@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+
 <html lang="en">
 
 <head>
@@ -25,59 +26,71 @@
   <!-- inject:css -->
   <link rel="stylesheet" href="{%static 'css/vertical-layout-light/style.css'%}">
   <!-- endinject -->
-  <link rel="shortcut icon" href="{%static 'images/rada.png'%}" />
+  <link rel="shortcut icon" href="{%static 'images/radar.png'%}" />
 </head>
 <body>
   <div class="container-scroller">
     <!-- partial:partials/_navbar.html -->
-    <nav class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex align-items-top flex-row">
-      <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
+  <nav class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex align-items-top flex-row">
+    <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
         <div class="me-3">
-          <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-bs-toggle="minimize">
-            <span class="icon-menu"></span>
-          </button>
+            <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-bs-toggle="minimize">
+                <span class="icon-menu"></span>
+            </button>
         </div>
         <div>
-          <a class="navbar-brand brand-logo" href="{%url 'shop:home'%}">
-            <img src="{%static 'images/logo.svg'%}" alt="logo" />
-          </a>
-          <a class="navbar-brand brand-logo-mini" href="">
-            <img src="{%static 'images/logo.svg'%}" alt="logo" />
-          </a>
+            <a class="navbar-brand brand-logo" href="{% url 'shop:home' %}">
+                <img src="{% static 'images/l' %}" alt="logo" />
+            </a>
+            <a class="navbar-brand brand-logo-mini" href="">
+                <img src="{% static 'images/' %}" alt="logo" />
+            </a>
         </div>
-      </div>
-      <div class="navbar-menu-wrapper d-flex align-items-top">
+    </div>
+    <div class="navbar-menu-wrapper d-flex align-items-top">
         <ul class="navbar-nav">
-          <li class="nav-item font-weight-semibold d-none d-lg-block ms-0">
-
-                  <h1 class="welcome-text">Hello, <span class="text-black fw-bold">{% firstof user.get_short_name user.get_username %}</span></h1>
-
-            <h3 class="welcome-sub-text">Nitrous</h3>
-          </li>
+            <li class="nav-item font-weight-semibold d-none d-lg-block ms-0">
+                <h1 class="welcome-text">Hello, <span class="text-black fw-bold">{% firstof user.get_short_name user.get_username %}</span></h1>
+                <h3 class="welcome-sub-text">Nitrous</h3>
+            </li>
         </ul>
 
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item dropdown d-none d-lg-block user-dropdown">
-            <a class="nav-link" id="UserDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="mdi mdi-account-circle-outline icon-lg"></i>
-            <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="UserDropdown">
-              <div class="dropdown-header text-center">
-                <i class="mdi mdi-account-circle-outline icon-lg"></i>
-                <p class="mb-1 mt-3 font-weight-semibold">{{request.user}}</p>
-                <p class="fw-light text-muted mb-0">{{request.user.email}}</p>
-              </div>
-              <a href="{%url 'shop:profile'%}" class="dropdown-item" data-toggle="modal" data-target="#profileModal"><i class="dropdown-item-icon mdi mdi-account-outline text-primary me-2"></i> Profile</a>
-              <a href="{%url 'shop:change_password'%}" class="dropdown-item"><i class="dropdown-item-icon mdi mdi-key-outline text-primary me-2"></i> Change Password</a>
-              <a class="dropdown-item"  href="#" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="dropdown-item-icon mdi mdi-power text-primary me-2"></i>Sign Out</a><!-- Logout Button -->
-
-            </div>
-          </li>
+            <li class="nav-item dropdown d-none d-lg-block user-dropdown">
+                <a class="nav-link" id="UserDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="mdi mdi-account-circle-outline icon-lg"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="UserDropdown">
+                    <div class="dropdown-header text-center">
+                        <i class="mdi mdi-account-circle-outline icon-lg"></i>
+                        <p class="mb-1 mt-3 font-weight-semibold">{{ request.user }}</p>
+                        <p class="fw-light text-muted mb-0">{{ request.user.email }}</p>
+                    </div>
+                    <a href="{% url 'shop:profile' %}" class="dropdown-item" data-toggle="modal" data-target="#profileModal">
+                        <i class="dropdown-item-icon mdi mdi-account-outline text-primary me-2"></i> Profile
+                    </a>
+                    <a href="{% url 'shop:change_password' %}" class="dropdown-item">
+                        <i class="dropdown-item-icon mdi mdi-key-outline text-primary me-2"></i> Change Password
+                    </a>
+                    {% if request.user.is_authenticated %}
+                        {% if request.user.is_staff %}
+                            <a href="{% url 'shop:toggle_admin_site' %}"  class="dropdown-item"> <i class="dropdown-item-icon mdi mdi-security text-primary me-2"></i>Admin Site</a>
+                        {% else %}
+                            <a href="/" class="dropdown-item">Normal Site</a>
+                        {% endif %}
+                    {% endif %}
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                        <i class="dropdown-item-icon mdi mdi-power text-primary me-2"></i> Sign Out
+                    </a><!-- Logout Button -->
+                </div>
+            </li>
         </ul>
         <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-bs-toggle="offcanvas">
-          <span class="mdi mdi-menu"></span>
+            <span class="mdi mdi-menu"></span>
         </button>
-      </div>
-    </nav>
+    </div>
+</nav>
+
     <!-- partial -->
     <div class="container-fluid page-body-wrapper">
       <!-- partial:partials/_settings-panel.html -->
@@ -143,9 +156,7 @@
             <div class="collapse" id="shop">
               <ul class="nav flex-column sub-menu">
                 <li class="nav-item"> <a class="nav-link" href="{%url 'shop:stock'%}">Stock</a></li>
-                <li class="nav-item"> <a class="nav-link" href="">Payments</a></li>
-                <li class="nav-item"> <a class="nav-link" href="">Auctions</a></li>
-                <li class="nav-item"> <a class="nav-link " href="{%url 'shop:item_create'%}">Items</a></li>
+                <li class="nav-item"> <a class="nav-link " href="{%url 'shop:item_list'%}">Items</a></li>
               </ul>
             </div>
           </li>

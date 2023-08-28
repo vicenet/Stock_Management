@@ -29,6 +29,10 @@ urlpatterns =[
     path('sales/<int:pk>/update/', SaleUpdateView.as_view(), name='sale_update'),
     path('sales/<int:pk>/delete/', SaleDeleteView.as_view(), name='sale_delete'),
     path('stock/',StockListView.as_view(),name='stock'),
-    path('receive_stock/',ReceiveStockView.as_view(), name='receive_stock'),
-
+    path('stock/create/<int:item_id>/',StockCreateView.as_view(),name='stock_create'),
+    path('receive-stock/<int:pk>/', StockReceiveView.as_view(), name='receive_stock'),
+    path('income_statement/',IncomeStatementView.as_view(), name='income_statement'),
+    path('create_expenses/', CreateExpensesView.as_view(), name='create_expenses'),
+    path('totals/', TotalsView.as_view(), name='totals'),
+    path('toggle-admin/', toggle_admin_site, name='toggle_admin_site'),
     ]

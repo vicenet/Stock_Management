@@ -1,0 +1,48 @@
+{% extends 'shop/index.html' %}
+
+{% load static %}
+
+{% block content %}
+<div class="main-panel">
+    <div class="content-wrapper">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="home-tab">
+                    <div class="d-sm-flex align-items-center justify-content-between border-bottom">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active ps-0" id="home-tab" data-bs-toggle="tab" href="#overview"
+                                    role="tab" aria-controls="overview" aria-selected="true">Stock Overview</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col d-flex flex-column">
+                        <div class="row flex-grow">
+                            <div class="col-lg-12 grid-margin stretch-card">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h1 class="mb-4">Sales Total: ${{ sales_total }}</h1>
+                                        <h1 class="mb-4">Expenses Total: ${{ expenses_total }}</h1>
+                                        <h1>Account Transactions</h1>
+                                        <ul class="list-group mt-3">
+                                            {% for transaction in account_transactions %}
+                                                <li class="list-group-item">
+                                                    {{ transaction.account.name }}: ${{ transaction.amount }}
+                                                </li>
+                                            {% empty %}
+                                                <li class="list-group-item">No transactions available.</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

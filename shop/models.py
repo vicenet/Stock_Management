@@ -20,19 +20,21 @@ class Item(models.Model):
 class Stock(models.Model):
     item = models.OneToOneField(Item, on_delete=models.CASCADE, primary_key=True)
     quantity = models.PositiveIntegerField()
-    best_price = models.PositiveIntegerField()
+    selling_price =models.PositiveIntegerField()
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.item}'
+        return f'{self.item} Quantity: {self.quantity}'
 
-class Customer(models.Model):
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length = 30)
-    alternative_phone = PhoneNumberField(blank=False, unique=True)
-    phone = PhoneNumberField(null=False, blank=False, unique=True)
+    def get_item_value(self):
+        return self.item.unit_price * self.quantity
+
+class Reorder(models.Model):
+    stock = models.ForeignKey(Stock,on_delete=models.CASCADE)
+    level = models.PositiveIntegerField()
+
     def __str__(self):
-        return f'{self.first_name} - {self.phone}'
+        return f'{self.stock.item} Reorder Level: {self.level}'
 
 class Sale(models.Model):
     CASH = 'CASH'
@@ -42,7 +44,8 @@ class Sale(models.Model):
         (MPESA, 'M-Pesa')
     ]
 
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length = 30)
     item = models.ForeignKey(Stock, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     amount_paid = models.PositiveIntegerField()
@@ -56,17 +59,44 @@ class Sale(models.Model):
         if self.quantity > self.item.quantity:
             raise ValidationError("You can't sell more than the items in stock")
 
-        amount_payable = self.calculate_amount_payable()
-        if self.amount_paid < amount_payable:
-            raise ValidationError("Please input the correct amount for the products chosen")
+
 
     def save(self, *args, **kwargs):
         self.full_clean()
         self.item.quantity -= self.quantity
         self.item.save()
         super().save(*args, **kwargs)
+        credit_transaction = CreditTransaction(account=Account.objects.get(name='Sales'), amount=self.amount_paid)
+        credit_transaction.save()
 
-    def calculate_amount_payable(self):
-        return self.quantity * self.item.best_price
 
+class Expenses(models.Model):
+    description=models.CharField(max_length=255,null=False)
+    amount=models.PositiveIntegerField()
+
+    def __str__(self):
+        return f'{self.description} {self.amount}'
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Create a debit transaction for expenses
+        debit_transaction = DebitTransaction(account=Account.objects.get(name='Expenses'), amount=self.amount)
+        debit_transaction.save()
+
+class Account(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+class CreditTransaction(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_date = models.DateTimeField(auto_now_add=True)
+
+class DebitTransaction(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_date = models.DateTimeField(auto_now_add=True)
 

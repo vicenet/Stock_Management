@@ -1,21 +1,62 @@
 from django.shortcuts import render
+from itertools import chain
 from django.views.generic import *
 from .forms import *
+from .models import *
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django_filters.views import FilterView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from django.urls import reverse_lazy
+from datetime import datetime
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.db.models import Sum
 
 # Create your views here.
  
 class HomePageView(TemplateView):
-    template_name = "shop/dashboard.html"
+    template_name = 'shop/dashboard.html'
 
+    def get(self, request, *args, **kwargs):
+        # Get all Reorder objects
+        reorder_levels = Reorder.objects.all()
+
+        # Create a dictionary to store stock items meeting the reorder criteria
+        stock_below_reorder = {}
+
+        # Iterate through each reorder level
+        for reorder_level in reorder_levels:
+            stock_item = reorder_level.stock
+            if stock_item.quantity <= reorder_level.level:
+                # Stock item is below or equal to the reorder level
+                if reorder_level.level not in stock_below_reorder:
+                    stock_below_reorder[reorder_level.level] = [stock_item]
+                else:
+                    stock_below_reorder[reorder_level.level].append(stock_item)
+
+        stocks = Stock.objects.all()
+
+    # Calculate the total stock valuation
+        total_valuation = sum(stock.get_item_value() for stock in stocks)
+        sales = Sale.objects.all()
+        total_revenue = sum(sale.amount_paid for sale in sales)
+
+        # Calculate Total Expenses
+        expenses = Expenses.objects.all()
+        total_expenses = sum(expense.amount for expense in expenses)
+
+        context = {
+            'stock_below_reorder': stock_below_reorder,
+            'total_valuation': total_valuation,
+            'total_revenue':total_revenue,
+            'total_expenses':total_expenses,
+        }
+
+        return render(self.request, self.template_name, context)
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'shop/profiles.html'
@@ -138,7 +179,17 @@ class ItemCreateView(CreateView):
     model = Item
     form_class = ItemForm
     template_name = 'shop/item_create.html'
-    success_url = reverse_lazy('shop:receive_stock')
+    success_url = reverse_lazy('shop:stock_create')
+
+    def form_valid(self, form):
+        # Save the item
+        self.object = form.save()
+
+        # Store the new_item_id in the session
+        self.request.session['new_item_id'] = self.object.pk
+
+        # Redirect to the stock creation view with the item_id as an argument
+        return redirect('shop:stock_create', item_id=self.object.pk)
 
 class ItemUpdateView(UpdateView):
     model = Item
@@ -171,7 +222,10 @@ class SaleCreateView(CreateView):
     model = Sale
     form_class = SaleForm
     template_name = 'shop/sales_create.html'
-    success_url = reverse_lazy('shop:sale_list')
+    def get_success_url(self):
+        sale_status = self.kwargs.get('sale_status')
+        return reverse_lazy('shop:sales', kwargs={'sale_status':'all'})
+
 
 class SaleUpdateView(UpdateView):
     model = Sale
@@ -189,14 +243,134 @@ class StockListView(ListView):
     template_name = 'shop/stock_list.html'
     context_object_name = 'stocks'
 
-class ReceiveStockView(FormView):
-    template_name = 'shop/stock_receipt.html'
-    form_class = StockReceiptForm
+
+class StockCreateView(CreateView):
+    model = Stock
+    form_class = StockCreationForm
+    template_name = 'shop/stock_create.html'  # Replace with your template name
+    success_url = reverse_lazy('shop:stock')  # Replace with your desired success URL
+
+    def get_initial(self):
+        # Get the newly created item (assuming it's stored in the session)
+        new_item_id = self.request.session.get('new_item_id')
+        item = get_object_or_404(Item, pk=new_item_id)
+
+        # Pre-fill the item field in the form
+        return {'item': item}
 
     def form_valid(self, form):
-        item = form.cleaned_data['item']
-        quantity_received = form.cleaned_data['quantity_received']
-        stock = Stock.objects.get(item=item)
-        stock.quantity += quantity_received
+        # Save the stock
+        self.object = form.save()
+        return super().form_valid(form)
+
+
+class StockReceiveView(UpdateView):
+    model = Stock
+    form_class = StockReceiveForm
+    template_name = 'shop/stock_receive.html'  # Replace with your template name
+    success_url = reverse_lazy( 'shop:stock')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['stock_name'] = self.object.item.name
+        return context
+
+    def form_valid(self, form):
+        # Update the stock quantity based on the received quantity
+        stock = form.instance
+        received_quantity = form.cleaned_data['received_quantity']
+        stock.quantity += received_quantity
         stock.save()
-        return redirect('shop:stock_list')
+        return super().form_valid(form)
+
+
+
+class IncomeStatementView(FilterView):
+    template_name = 'shop/income_statement.html'
+    filterset_class = TransactionFilterForm
+
+    def get_queryset(self):
+        queryset = Sale.objects.all()  # You can use Expenses if needed
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Filter the queryset based on the request GET parameters
+        queryset = self.get_queryset()
+        filtered_data = self.filterset_class(self.request.GET, queryset=queryset).qs
+
+        # Calculate total sales revenue
+        total_sales = filtered_data.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+
+        # Calculate total expenses
+        # Corrected total_expenses calculation
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+
+        if start_date and end_date:
+            total_expenses = Expenses.objects.filter(transaction_date__range=(start_date, end_date)).aggregate(Sum('amount'))['amount__sum'] or 0
+        else:
+            total_expenses = 0
+
+        # Calculate net income
+        net_income = total_sales - total_expenses
+
+        context['total_sales'] = total_sales
+        context['total_expenses'] = total_expenses
+        context['net_income'] = net_income
+        return context
+
+class CreateExpensesView(View):
+    template_name = 'shop/expense_form.html'
+
+    def get(self, request):
+        form = ExpensesForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = ExpensesForm(request.POST)
+        if form.is_valid():
+            # Save the Expenses object
+            expenses = form.save()
+
+            # Create a debit transaction for expenses
+            debit_transaction = DebitTransaction(account=Account.objects.get(name='Expenses'), amount=expenses.amount)
+            debit_transaction.save()
+
+            # Redirect to a success page or take further actions
+            return redirect('shop:income_statement')  # Replace 'success_page' with the actual URL name for the success page
+
+        return render(request, self.template_name, {'form': form})
+
+class TotalsView(TemplateView):
+    template_name = 'shop/totals.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Calculate sales total
+        sales_total = Sale.objects.aggregate(total=models.Sum('amount_paid'))['total'] or 0
+
+        # Calculate expenses total
+        expenses_total = Expenses.objects.aggregate(total=models.Sum('amount'))['total'] or 0
+
+        # Get account transactions
+        credit_transactions = CreditTransaction.objects.all()
+        debit_transactions = DebitTransaction.objects.all()
+        account_transactions = list(chain(credit_transactions, debit_transactions))
+        account_transactions.sort(key=lambda x: x.transaction_date, reverse=True)
+
+        context['sales_total'] = sales_total
+        context['expenses_total'] = expenses_total
+        context['account_transactions'] = account_transactions
+
+        return context
+
+
+def toggle_admin_site(request):
+    if request.user.is_authenticated and request.user.is_staff:
+        # If the user is authenticated and is a staff member (admin)
+        return redirect('/admin/')  # Redirect to the admin site
+    else:
+        return redirect('/')  # Redirect to the normal site

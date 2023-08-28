@@ -1,10 +1,7 @@
 from django import forms
-import phonenumbers
-from .models import Category, Item, Stock, Customer, Sale
-from phonenumber_field.formfields import PhoneNumberField
-from phonenumber_field.phonenumber import PhoneNumber
+import django_filters
+from .models import *
 from django.core.files.base import ContentFile
-from phonenumber_field.widgets import PhoneNumberPrefixWidget
 from django.utils.translation import gettext_lazy as _
 
 class CategoryForm(forms.ModelForm):
@@ -29,39 +26,23 @@ class ItemForm(forms.ModelForm):
 class StockForm(forms.ModelForm):
     class Meta:
         model = Stock
-        fields = ['item', 'quantity', 'best_price']
+        fields = ['item', 'quantity']
         widgets = {
             'item': forms.Select(attrs={'class': 'form-control'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
-            'best_price': forms.NumberInput(attrs={'class': 'form-control'}),
+
         }
 
 
-
 class SaleForm(forms.ModelForm):
-    first_name = forms.CharField(
-        max_length=100,  # Set an appropriate max length
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
-        label=_('First Name')  # Change the label to make it clear
-    )
-    last_name = forms.CharField(
-        max_length=100,  # Set an appropriate max length
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
-        label=_('Last Name')  # Change the label to make it clear
-    )
-    phone = PhoneNumberField(
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
-        label=_('Phone Number')
-    )
-
-
     class Meta:
         model = Sale
-        fields = ['first_name','last_name','phone', 'item', 'quantity', 'amount_paid']
+        fields = ['first_name','last_name', 'item', 'quantity', 'amount_paid','mode_of_payment']
         widgets = {
             'item': forms.Select(attrs={'class': 'form-control'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
             'amount_paid': forms.NumberInput(attrs={'class': 'form-control'}),
+            'mode_of_payment': forms.Select(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -69,43 +50,57 @@ class SaleForm(forms.ModelForm):
         for field_name in self.fields:
             self.fields[field_name].widget.attrs.update({'class': 'form-control'})
 
-    def clean_phone(self):
-        phone = self.cleaned_data.get('phone')
-        if phone:
-            if not phone.is_valid():
-                raise forms.ValidationError('Invalid phone number')
-            if phone.country_code != '254':
-                raise forms.ValidationError('Phone number must belong to Kenya')
-        return phone
 
-    def clean_alternative_phone(self):
-        alternative_phone = self.cleaned_data.get('alternative_phone')
-        if alternative_phone:
-            if not alternative_phone.is_valid():
-                raise forms.ValidationError('Invalid alternative phone number')
-            if alternative_phone.country_code != '254':
-                raise forms.ValidationError('Alternative phone number must belong to Kenya')
-        return alternative_phone
+class TransactionFilterForm(django_filters.FilterSet):
+    start_date = django_filters.DateFilter(
+        field_name='transaction_date',
+        lookup_expr='gte',
+        label='Start Date',
+        widget=forms.DateInput(attrs={'class': 'form-control'})
+    )
 
-    def save(self, commit=True, *args, **kwargs):
-        first_name = self.cleaned_data.get('first_name')
-        last_name = self.cleaned_data.get('last_name')
-        phone = self.cleaned_data.get('phone')
+    end_date = django_filters.DateFilter(
+        field_name='transaction_date',
+        lookup_expr='lte',
+        label='End Date',
+        widget=forms.DateInput(attrs={'class': 'form-control'})
+    )
 
-        # Check if a customer with the same name and phone number exists
-        customer = Customer.objects.filter(first_name=customer_name, phone=phone).first()
+    class Meta:
+        model = Sale  # Use the relevant model here
+        fields = []
 
-        # If the customer doesn't exist, create a new one
-        if not customer:
-            customer = Customer(first_name=customer_name, phone=phone, alternative_phone=alternative_phone)
-            customer.save()
+class StockCreationForm(forms.ModelForm):
+    class Meta:
+        model = Stock
+        fields = ['item', 'quantity',]
+        widgets = {
+            'item': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
 
-        # Create the sale using the customer and other data
-        sale = Sale(customer=customer, item=self.cleaned_data.get('item'), quantity=self.cleaned_data.get('quantity'), amount_paid=self.cleaned_data.get('amount_paid'))
-        sale.save()
+class ReorderForm(forms.ModelForm):
+    class Meta:
+        model = Reorder
+        fields = ['stock', 'level']
+        widgets = {
+            'stock':forms.Select(attrs={'class':'form-control'}),
+            'level':forms.NumberInput(attrs={'class':'form-control'}),
+            }
 
-        return sale
+class StockReceiveForm(forms.ModelForm):
+    received_quantity = forms.IntegerField(label='Received Quantity', min_value=1, widget=forms.NumberInput(attrs={'class': 'form-control'}))
 
-class StockReceiptForm(forms.Form):
-    item = forms.ModelChoiceField(queryset=Stock.objects.all(), empty_label=None, widget=forms.Select(attrs={'class': 'form-control'}))
-    quantity_received = forms.IntegerField(min_value=1, widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    class Meta:
+        model = Stock
+        fields = ['received_quantity']
+
+
+class ExpensesForm(forms.ModelForm):
+    class Meta:
+        model = Expenses
+        fields = ['description', 'amount']
+        widgets = {
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
