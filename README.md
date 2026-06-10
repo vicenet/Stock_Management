@@ -80,6 +80,16 @@ This project is a Stock Management System built using Django. It helps manage pr
      - `amount`: The amount of the debit transaction.
      - `transaction_date`: The date of the transaction.
 
-The Project will be updated soon regards
+## Getting Started
 
-Me.
+```bash
+git clone https://github.com/vicenet/Stock_Management.git
+cd Stock_Management
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+---
+
+Built by [Brian Gitau](https://github.com/vicenet)
